@@ -7,19 +7,62 @@
 <meta name="description" content="Gate — Kurasi gadget terbaik dengan harga terbaik. Belanja langsung di Shopee." />
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><path d='M8 34 V16 a12 12 0 0 1 24 0 V34' stroke='%231d1d1f' stroke-width='3' fill='none' stroke-linecap='round'/><circle cx='20' cy='22' r='2.5' fill='%231d1d1f'/></svg>" />
 
+<!-- Anti-flash: set theme sebelum render -->
+<script>
+  (function() {
+    try {
+      const saved = localStorage.getItem('gate-theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (saved === 'dark' || (!saved && prefersDark)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    } catch(e) {}
+  })();
+</script>
+
 <style>
-  /* ============ RESET & BASE ============ */
-  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+  /* ============ TOKENS ============ */
   :root {
     --bg: #ffffff;
     --bg-soft: #f5f5f7;
+    --bg-card-hover: #ffffff;
     --text: #1d1d1f;
     --text-soft: #6e6e73;
+    --text-mute: #86868b;
     --accent: #0071e3;
     --accent-hover: #0077ed;
-    --border: #d2d2d7;
+    --accent-soft: rgba(0,113,227,0.08);
+    --border: rgba(0,0,0,0.06);
+    --border-strong: rgba(0,0,0,0.10);
+    --nav-bg: rgba(255,255,255,0.72);
+    --shadow-card: 0 20px 50px rgba(0,0,0,0.10);
+    --blob-1: rgba(0,113,227,0.20);
+    --blob-2: rgba(123,97,255,0.18);
+    --blob-3: rgba(255,45,146,0.14);
     --radius: 20px;
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
   }
+  [data-theme="dark"] {
+    --bg: #000000;
+    --bg-soft: #0d0d0f;
+    --bg-card-hover: #141416;
+    --text: #f5f5f7;
+    --text-soft: #a1a1a6;
+    --text-mute: #6e6e73;
+    --accent: #0a84ff;
+    --accent-hover: #3b9cff;
+    --accent-soft: rgba(10,132,255,0.12);
+    --border: rgba(255,255,255,0.08);
+    --border-strong: rgba(255,255,255,0.14);
+    --nav-bg: rgba(10,10,12,0.72);
+    --shadow-card: 0 24px 60px rgba(0,0,0,0.55);
+    --blob-1: rgba(10,132,255,0.32);
+    --blob-2: rgba(139,109,255,0.26);
+    --blob-3: rgba(255,45,146,0.22);
+  }
+
+  /* ============ RESET ============ */
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
   html { scroll-behavior: smooth; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -28,18 +71,63 @@
     line-height: 1.5;
     letter-spacing: -0.01em;
     overflow-x: hidden;
+    transition: background .5s var(--ease), color .5s var(--ease);
   }
   a { color: inherit; text-decoration: none; }
+
+  /* ============ SCROLL PROGRESS BAR ============ */
+  .scroll-progress {
+    position: fixed;
+    top: 0; left: 0;
+    height: 3px;
+    width: 0%;
+    background: linear-gradient(90deg, #0071e3, #7b61ff, #ff2d92);
+    z-index: 200;
+    transition: width 0.1s linear;
+    box-shadow: 0 0 12px rgba(0,113,227,0.5);
+  }
+
+  /* ============ BACKGROUND BLOBS ============ */
+  .blobs {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(90px);
+    will-change: transform;
+    transition: background 0.5s var(--ease);
+  }
+  .blob-1 {
+    width: 520px; height: 520px;
+    background: var(--blob-1);
+    top: -120px; left: -100px;
+  }
+  .blob-2 {
+    width: 460px; height: 460px;
+    background: var(--blob-2);
+    top: 40%; right: -140px;
+  }
+  .blob-3 {
+    width: 420px; height: 420px;
+    background: var(--blob-3);
+    bottom: -120px; left: 30%;
+  }
 
   /* ============ NAVBAR ============ */
   nav {
     position: fixed; top: 0; left: 0; right: 0; z-index: 100;
     backdrop-filter: saturate(180%) blur(20px);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
-    background: rgba(255,255,255,0.72);
-    border-bottom: 1px solid rgba(0,0,0,0.06);
-    transition: all .3s ease;
+    background: var(--nav-bg);
+    border-bottom: 1px solid var(--border);
+    transition: transform .4s var(--ease), background .5s var(--ease), border-color .5s var(--ease);
   }
+  nav.hide { transform: translateY(-100%); }
   .nav-inner {
     max-width: 1100px; margin: 0 auto;
     padding: 14px 24px;
@@ -48,8 +136,11 @@
   .logo {
     display: flex; align-items: center; gap: 10px;
     font-size: 20px; font-weight: 600; letter-spacing: -0.02em;
+    transition: transform .3s var(--ease);
   }
+  .logo:hover { transform: scale(1.03); }
   .logo svg { width: 26px; height: 26px; }
+  .nav-right { display: flex; align-items: center; gap: 24px; }
   .nav-links { display: flex; gap: 28px; font-size: 14px; align-items: center; }
   .nav-links a { color: var(--text-soft); transition: color .2s; }
   .nav-links a:hover { color: var(--text); }
@@ -57,26 +148,56 @@
     background: var(--accent); color: #fff !important;
     padding: 8px 16px; border-radius: 980px;
     font-size: 13px; font-weight: 500;
-    transition: background .2s;
+    transition: background .2s, transform .2s;
   }
-  .nav-cta:hover { background: var(--accent-hover); }
+  .nav-cta:hover { background: var(--accent-hover); transform: scale(1.04); }
+
+  /* ============ THEME TOGGLE ============ */
+  .theme-toggle {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    border: 1px solid var(--border-strong);
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .25s, border-color .5s, transform .3s var(--ease);
+    position: relative;
+    overflow: hidden;
+  }
+  .theme-toggle:hover {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    transform: scale(1.08) rotate(15deg);
+  }
+  .theme-toggle svg {
+    width: 18px; height: 18px;
+    position: absolute;
+    transition: transform .5s var(--ease), opacity .3s;
+  }
+  .icon-moon { opacity: 1; transform: rotate(0deg) scale(1); }
+  .icon-sun { opacity: 0; transform: rotate(-90deg) scale(0.5); }
+  [data-theme="dark"] .icon-moon { opacity: 0; transform: rotate(90deg) scale(0.5); }
+  [data-theme="dark"] .icon-sun { opacity: 1; transform: rotate(0deg) scale(1); }
 
   /* ============ HERO ============ */
   .hero {
-    padding: 170px 24px 110px;
+    padding: 180px 24px 120px;
     text-align: center;
     max-width: 900px; margin: 0 auto;
+    position: relative;
   }
   .hero .eyebrow {
     display: inline-block;
     font-size: 13px; font-weight: 500;
     color: var(--accent);
     letter-spacing: 0.02em;
-    margin-bottom: 22px;
+    margin-bottom: 24px;
     padding: 6px 14px;
-    background: rgba(0,113,227,0.08);
+    background: var(--accent-soft);
     border-radius: 980px;
-    opacity: 0; animation: fadeUp .8s .1s ease forwards;
+    opacity: 0;
+    animation: fadeUp .9s .1s var(--ease) forwards;
   }
   .hero h1 {
     font-size: clamp(44px, 7.5vw, 82px);
@@ -84,43 +205,65 @@
     letter-spacing: -0.045em;
     line-height: 1.03;
     margin-bottom: 26px;
-    opacity: 0; animation: fadeUp .8s .2s ease forwards;
   }
+  .hero h1 .line {
+    display: block;
+    overflow: hidden;
+    padding-bottom: 4px;
+  }
+  .hero h1 .line > span {
+    display: inline-block;
+    transform: translateY(110%);
+    animation: lineUp 1.1s var(--ease) forwards;
+  }
+  .hero h1 .line:nth-child(1) > span { animation-delay: 0.2s; }
+  .hero h1 .line:nth-child(2) > span { animation-delay: 0.36s; }
   .hero h1 .gradient {
     background: linear-gradient(90deg, #0071e3, #7b61ff, #ff2d92);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
+    background-size: 200% 100%;
+    animation: shimmer 6s linear infinite;
   }
   .hero p {
     font-size: clamp(17px, 2.2vw, 21px);
     color: var(--text-soft);
     max-width: 620px; margin: 0 auto 38px;
-    opacity: 0; animation: fadeUp .8s .35s ease forwards;
+    opacity: 0;
+    animation: fadeUp .9s .55s var(--ease) forwards;
   }
   .hero-cta {
     display: inline-flex; align-items: center; gap: 8px;
     background: var(--accent); color: #fff;
     padding: 15px 30px; border-radius: 980px;
     font-size: 16px; font-weight: 500;
-    transition: all .25s ease;
-    opacity: 0; animation: fadeUp .8s .5s ease forwards;
+    transition: background .25s, box-shadow .3s, transform .3s var(--ease);
     box-shadow: 0 4px 20px rgba(0,113,227,0.25);
+    opacity: 0;
+    animation: fadeUp .9s .7s var(--ease) forwards;
+    will-change: transform;
   }
   .hero-cta:hover {
     background: var(--accent-hover);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 30px rgba(0,113,227,0.35);
+    box-shadow: 0 12px 36px rgba(0,113,227,0.40);
   }
-  .hero-cta svg { width: 16px; height: 16px; }
+  .hero-cta svg { width: 16px; height: 16px; transition: transform .3s var(--ease); }
+  .hero-cta:hover svg { transform: translateX(4px); }
 
+  @keyframes lineUp {
+    to { transform: translateY(0); }
+  }
   @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(20px); }
+    from { opacity: 0; transform: translateY(24px); }
     to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes shimmer {
+    to { background-position: 200% 0; }
   }
 
   /* ============ SECTION ============ */
-  section { padding: 80px 24px; }
+  section { padding: 90px 24px; position: relative; }
   .section-head {
     max-width: 900px; margin: 0 auto 60px; text-align: center;
   }
@@ -136,29 +279,69 @@
     max-width: 560px; margin: 0 auto;
   }
 
+  /* ============ SCROLL REVEAL ============ */
+  .reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity .9s var(--ease), transform .9s var(--ease);
+    will-change: opacity, transform;
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  .reveal-3d {
+    opacity: 0;
+    transform: perspective(1200px) rotateX(18deg) translateY(70px) scale(0.96);
+    transform-origin: center bottom;
+    transition:
+      opacity 1s var(--ease),
+      transform 1.1s var(--ease),
+      box-shadow .35s ease,
+      background .35s ease;
+    will-change: opacity, transform;
+  }
+  .reveal-3d.visible {
+    opacity: 1;
+    transform: perspective(1200px) rotateX(0deg) translateY(0) scale(1);
+  }
+
+  .reveal-scale {
+    opacity: 0;
+    transform: scale(0.92);
+    transition: opacity .9s var(--ease), transform 1s var(--ease);
+  }
+  .reveal-scale.visible { opacity: 1; transform: scale(1); }
+
   /* ============ PRODUCT GRID ============ */
   .products {
     max-width: 1180px; margin: 0 auto;
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 20px;
+    perspective: 1400px;
   }
   .card {
     background: var(--bg-soft);
     border-radius: var(--radius);
-    padding: 30px 28px;
+    padding: 32px 28px 28px;
     display: flex; flex-direction: column;
-    transition: transform .35s ease, box-shadow .35s ease, background .35s ease;
-    opacity: 0; transform: translateY(24px);
     position: relative;
     overflow: hidden;
-    min-height: 260px;
+    border: 1px solid var(--border);
   }
-  .card.visible { opacity: 1; transform: translateY(0); }
+  .card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%), var(--accent-soft), transparent 60%);
+    opacity: 0;
+    transition: opacity .4s;
+    pointer-events: none;
+  }
+  .card:hover::before { opacity: 1; }
   .card:hover {
-    transform: translateY(-6px);
-    background: #fff;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.10);
+    background: var(--bg-card-hover);
+    box-shadow: var(--shadow-card);
   }
   .card-tag {
     display: inline-block;
@@ -169,8 +352,9 @@
     letter-spacing: 0.08em;
     margin-bottom: 18px;
     padding: 4px 10px;
-    background: rgba(0,113,227,0.08);
+    background: var(--accent-soft);
     border-radius: 6px;
+    transition: background .5s var(--ease);
   }
   .card h3 {
     font-size: 21px; font-weight: 600;
@@ -181,42 +365,44 @@
   .card p {
     font-size: 14.5px;
     color: var(--text-soft);
-    margin-bottom: 24px;
+    margin-bottom: 26px;
     line-height: 1.55;
     flex-grow: 1;
   }
-  .card-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding-top: 18px;
-    border-top: 1px solid rgba(0,0,0,0.06);
-  }
-  .card-price {
-    font-size: 17px; font-weight: 700;
-    color: var(--text);
-    letter-spacing: -0.02em;
-  }
   .btn-buy {
-    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-    background: var(--text); color: #fff;
-    padding: 10px 18px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%;
+    background: var(--text); color: var(--bg);
+    padding: 13px 20px;
     border-radius: 980px;
-    font-size: 13.5px; font-weight: 500;
-    transition: all .2s ease;
+    font-size: 14.5px; font-weight: 500;
+    transition: all .3s var(--ease);
     border: none; cursor: pointer;
     font-family: inherit;
-    white-space: nowrap;
+    margin-top: auto;
+    position: relative;
+    overflow: hidden;
   }
+  .btn-buy::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+    transform: translateX(-100%);
+    transition: transform .7s var(--ease);
+  }
+  .btn-buy:hover::after { transform: translateX(100%); }
   .btn-buy:hover {
     background: var(--accent);
-    transform: scale(1.03);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(0,113,227,0.35);
   }
-  .btn-buy svg { width: 13px; height: 13px; }
+  .btn-buy svg { width: 14px; height: 14px; transition: transform .3s var(--ease); }
+  .btn-buy:hover svg { transform: translate(3px, -3px); }
 
   /* ============ WHY / FEATURES ============ */
-  .why { background: var(--bg-soft); }
+  .why { background: transparent; }
   .features {
     max-width: 1000px; margin: 0 auto;
     display: grid;
@@ -225,12 +411,17 @@
     text-align: center;
   }
   .feature-icon {
-    width: 52px; height: 52px;
+    width: 56px; height: 56px;
     margin: 0 auto 18px;
     display: flex; align-items: center; justify-content: center;
-    background: #fff;
-    border-radius: 14px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    transition: transform .4s var(--ease), box-shadow .4s, background .5s;
+  }
+  .feature:hover .feature-icon {
+    transform: translateY(-6px) rotate(-6deg);
+    box-shadow: 0 10px 28px rgba(0,113,227,0.20);
   }
   .feature-icon svg { width: 24px; height: 24px; stroke: var(--accent); }
   .feature h3 {
@@ -238,7 +429,7 @@
     margin-bottom: 8px;
   }
   .feature p {
-    font-size: 14px; color: var(--text-soft); line-height: 1.5;
+    font-size: 14px; color: var(--text-soft); line-height: 1.55;
   }
 
   /* ============ CTA BANNER ============ */
@@ -247,11 +438,24 @@
     background: linear-gradient(135deg, #1d1d1f 0%, #2d2d30 100%);
     color: #fff;
     border-radius: 28px;
-    padding: 70px 40px;
+    padding: 80px 40px;
     text-align: center;
+    position: relative;
+    overflow: hidden;
   }
+  .cta-banner::before {
+    content: "";
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: conic-gradient(from 0deg, transparent, rgba(0,113,227,0.15), transparent 30%);
+    animation: rotate 12s linear infinite;
+    pointer-events: none;
+  }
+  @keyframes rotate { to { transform: rotate(360deg); } }
+  .cta-banner > * { position: relative; z-index: 1; }
   .cta-banner h2 {
-    font-size: clamp(28px, 4.5vw, 40px);
+    font-size: clamp(28px, 4.5vw, 42px);
     font-weight: 700;
     letter-spacing: -0.03em;
     margin-bottom: 14px;
@@ -266,47 +470,99 @@
     background: #fff; color: #1d1d1f;
     padding: 14px 30px; border-radius: 980px;
     font-size: 15px; font-weight: 600;
-    transition: all  .25s ease;
+    transition: all .3s var(--ease);
   }
-  .cta-b13anner a:hover {
-    transform: translateY(-2px.);
-    box-shadow: 0 10px 530pxpx rgba(255,255,255,0.2);
-;  }
+  .cta-banner a:hover {
+    transform: translateY(-3px) scale(1.03);
+    box-shadow: 0 14px 40px rgba(255,255,255,0.25);
+  }
+  .cta-banner a svg { transition: transform .3s var(--ease); }
+  .cta-banner a:hover svg { transform: translateX(4px); }
 
   /* ============ FOOTER ============ */
   footer {
     text-align: center;
     padding: 50px 24px 40px;
-    border-top: 1px solid rgba(0,0,0,0.06);
+    border-top: 1px solid var(--border);
     font-size: 13px;
     color: var(--text-soft);
+    transition: border-color .5s;
   }
   footer .logo { justify-content: center; margin-bottom: 12px; color: var(--text); }
   footer .disclaimer {
     max-width: 520px; margin: 16px auto 0;
     font-size: 12px; line-height: 1.6;
-    color: #86868b;
+    color: var(--text-mute);
   }
+
+  /* ============ BACK TO TOP ============ */
+  .to-top {
+    position: fixed;
+    bottom: 28px; right: 28px;
+    width: 46px; height: 46px;
+    border-radius: 50%;
+    background: var(--text);
+    color: var(--bg);
+    border: none;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.18);
+    opacity: 0;
+    transform: translateY(20px) scale(0.8);
+    pointer-events: none;
+    transition: all .4s var(--ease);
+    z-index: 90;
+  }
+  .to-top.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+  }
+  .to-top:hover {
+    background: var(--accent);
+    color: #fff;
+    transform: translateY(-4px) scale(1.05);
+  }
+  .to-top svg { width: 18px; height: 18px; }
 
   /* ============ RESPONSIVE ============ */
   @media (max-width: 640px) {
     .nav-links { display: none; }
-    .hero { padding: 130px 20px 80px; }
-    section { padding: 60px 20px; }
+    .nav-right { gap: 12px; }
+    .hero { padding: 140px 20px 90px; }
+    section { padding: 70px 20px; }
     .products { grid-template-columns: 1fr; gap: 14px; }
-    .card { padding: 24px 22px; min-height: auto; }
+    .card { padding: 26px 22px 22px; }
     .card h3 { font-size: 18px; }
-    .card p { font-size: margin-bottom: 20px; }
-    .card-price { font-size: 16px; }
-    .btn-buy { font-size: 12.5px; padding: 9px 16px; }
-    .cta-banner { padding: 50px 24px; border-radius: 22px; }
+    .card p { font-size: 13.5px; margin-bottom: 22px; }
+    .btn-buy { font-size: 13.5px; padding: 12px 18px; }
+    .cta-banner { padding: 60px 24px; border-radius: 22px; }
+    .to-top { bottom: 20px; right: 20px; }
+  }
+
+  /* ============ REDUCED MOTION ============ */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 </style>
 </head>
 <body>
 
+<!-- ============ SCROLL PROGRESS ============ -->
+<div class="scroll-progress" id="progress"></div>
+
+<!-- ============ BACKGROUND BLOBS ============ -->
+<div class="blobs" aria-hidden="true">
+  <div class="blob blob-1" data-parallax="0.15"></div>
+  <div class="blob blob-2" data-parallax="-0.10"></div>
+  <div class="blob blob-3" data-parallax="0.20"></div>
+</div>
+
 <!-- ============ NAVBAR ============ -->
-<nav>
+<nav id="nav">
   <div class="nav-inner">
     <a href="#" class="logo">
       <svg viewBox="0 0 40 40" fill="none">
@@ -315,10 +571,21 @@
       </svg>
       <span>Gate</span>
     </a>
-    <div class="nav-links">
-      <a href="#produk">Produk</a>
-      <a href="#kenapa">Kenapa Gate</a>
-      <a href="#produk" class="nav-cta">Belanja Sekarang</a>
+    <div class="nav-right">
+      <div class="nav-links">
+        <a href="#produk">Produk</a>
+        <a href="#kenapa">Kenapa Gate</a>
+        <a href="#produk" class="nav-cta">Belanja Sekarang</a>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Ganti tema">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+        </svg>
+      </button>
     </div>
   </div>
 </nav>
@@ -327,14 +594,14 @@
 <header class="hero">
   <span class="eyebrow">✦ Kurasi Gadget Terbaik</span>
   <h1>
-    Gadget pilihan.<br/>
-    <span class="gradient">Harga terbaik.</span>
+    <span class="line"><span>Gadget pilihan.</span></span>
+    <span class="line"><span class="gradient">Harga terbaik.</span></span>
   </h1>
   <p>
     Gate memilih gadget terbaik untuk kamu — dari kopi, kamera, sampai monitor gaming.
     Semua produk sudah dikurasi, tinggal klik dan checkout langsung di Shopee.
   </p>
-  <a href="#produk" class="hero-cta">
+  <a href="#produk" class="hero-cta magnetic" id="heroCta">
     Lihat Koleksi
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
       <path d="M5 12h14M13 6l6 6-6 6"/>
@@ -344,108 +611,84 @@
 
 <!-- ============ PRODUK ============ -->
 <section id="produk">
-  <div class="section-head">
+  <div class="section-head reveal">
     <h2>Koleksi Pilihan</h2>
     <p>Dipilih langsung oleh Adovan. Klik tombol untuk beli di Shopee.</p>
   </div>
 
   <div class="products">
 
-    <!-- ====== PRODUK 1 — VESPER ====== -->
-    <div class="card">
+    <div class="card reveal-3d">
       <span class="card-tag">Coffee</span>
       <h3>Vesper Mini Portable Coffee Traveller Set</h3>
       <p>Set lengkap alat kopi portable pour-over kit. Cocok untuk traveling, camping, atau ngopi di mana saja.</p>
-      <div class="card-footer">
-        <div class="card-price">Rp256.062</div>
-        <a class="btn-buy" href="https://s.shopee.co.id/2Vs7vncITp" target="_blank" rel="noopener">
-          Beli
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg>
-        </a>
-      </div>
+      <a class="btn-buy" href="https://s.shopee.co.id/2Vs7vncITp" target="_blank" rel="noopener">
+        Beli di Shopee
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg>
+      </a>
     </div>
 
-    <!-- ====== PRODUK 2 — ACRODER ====== -->
-    <div class="card">
+    <div class="card reveal-3d">
       <span class="card-tag">Camera</span>
       <h3>Acroder Action Camera 4K HD WiFi</h3>
       <p>Layar IPS 1,54 inci, lensa putar 270°, night vision. Pocket video recorder untuk vlog & traveling.</p>
-      <div class="card-footer">
-        <div class="card-price">Rp457.757</div>
-        <a class="btn-buy" href="https://s.shopee.co.id/6AlQIcjD8g" target="_blank" rel="noopener">
-          Beli
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg>
-        </a>
-      </div>
+      <a class="btn-buy" href="https://s.shopee.co.id/6AlQIcjD8g" target="_blank" rel="noopener">
+        Beli di Shopee
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg>
+      </a>
     </div>
 
-    <!-- ====== PRODUK 3 — STARLINK ====== -->
-    <div class="card">
+    <div class="card reveal-3d">
       <span class="card-tag">Networking</span>
       <h3>Starlink Mini — Standard V4</h3>
       <p>Internet satelit portable. Ringkas, mudah dibawa, kecepatan tinggi di mana saja.</p>
-      <div class="card-footer">
-        <div class="card-price">Rp4.674.150</div>
-        <a class="btn-buy" href="https://s.shopee.co.id/8V9L4yX8C9" target="_blank" rel="noopener">
-          Beli
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg>
-        </a>
-      </div>
+      <a class="btn-buy" href="https://s.shopee.co.id/8V9L4yX8C9" target="_blank" rel="noopener">
+        Beli di Shopee
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg>
+      </a>
     </div>
 
-    <!-- ====== PRODUK 4 — XIAOMI ====== -->
-    <div class="card">
+    <div class="card reveal-3d">
       <span class="card-tag">Monitor</span>
       <h3>Xiaomi Curved Gaming Monitor G34WQi 2026</h3>
       <p>34" WQHD 1500R, refresh rate 180Hz, 95% DCI-P3. VESA Certified HDR400. Xiaomi Official Store.</p>
-      <div class="card-footer">
-        <div class="card-price">Rp4.793.060</div>
-        <a class="btn-buy" href="https://s.shopee.co.id/7AdxUYUBHB" target="_blank" rel="noopener">
-          Beli
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg>
-        </a>
-      </div>
+      <a class="btn-buy" href="https://s.shopee.co.id/7AdxUYUBHB" target="_blank" rel="noopener">
+        Beli di Shopee
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg>
+      </a>
     </div>
 
-    <!-- ====== PRODUK 5 — MIDEA ====== -->
-    <div class="card">
+    <div class="card reveal-3d">
       <span class="card-tag">Home Living</span>
       <h3>Midea 6.0L Air Cooler AC100-A</h3>
       <p>Pendingin ruangan portable 55W. 3-in-1: humidifier, air purifier, ionizer. Remote control & timer 7 jam.</p>
-      <div class="card-footer">
-        <div class="card-price">Rp1.231.650</div>
-        <a class="btn-buy" href="https://s.shopee.co.id/4B0Lv4AGr7" target="_blank" rel="noopener">
-          Beli
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg>
-        </a>
-      </div>
+      <a class="btn-buy" href="https://s.shopee.co.id/4B0Lv4AGr7" target="_blank" rel="noopener">
+        Beli di Shopee
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg>
+      </a>
     </div>
 
-    <!-- ====== PRODUK 6 — NOD MAXIMO ====== -->
-    <div class="card">
+    <div class="card reveal-3d">
       <span class="card-tag">Coffee</span>
       <h3>NOD Maximo Smart Capsule Machine</h3>
       <p>All-in-one drink maker. Espresso, latte, teh, cokelat — one-touch brewing & cleaning. Tekanan 19 Bar.</p>
-      <div class="card-footer">
-        <div class="card-price">Rp2.931.650</div>
-        <a class="btn-buy" href="https://s.shopee.co.id/1VzakDDi8w" target="_blank" rel="noopener">
-          Beli
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg>
-        </a>
-      </div>
+      <a class="btn-buy" href="https://s.shopee.co.id/1VzakDDi8w" target="_blank" rel="noopener">
+        Beli di Shopee
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg>
+      </a>
     </div>
 
   </div>
 </section>
 
 <!-- ============ KENAPA GATE ============ -->
-<section id="kenapa" class="why">
-  <div class="section-head">
+<section id="kenapa">
+  <div class="section-head reveal">
     <h2>Kenapa Gate?</h2>
     <p>Bukan sekadar link. Kami kurasi produk yang benar-benar layak.</p>
   </div>
   <div class="features">
-    <div class="feature">
+    <div class="feature reveal-scale">
       <div class="feature-icon">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/>
@@ -454,7 +697,7 @@
       <h3>Kurasi Ketat</h3>
       <p>Setiap produk dipilih manual oleh Adovan — bukan asal comot.</p>
     </div>
-    <div class="feature">
+    <div class="feature reveal-scale">
       <div class="feature-icon">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
@@ -463,7 +706,7 @@
       <h3>Harga Transparan</h3>
       <p>Semua harga diambil langsung dari Shopee. Nggak ada markup.</p>
     </div>
-    <div class="feature">
+    <div class="feature reveal-scale">
       <div class="feature-icon">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
@@ -477,10 +720,10 @@
 
 <!-- ============ CTA BANNER ============ -->
 <section>
-  <div class="cta-banner">
+  <div class="cta-banner reveal-scale">
     <h2>Siap upgrade gadget kamu?</h2>
     <p>Jelajahi koleksi pilihan Gate dan temukan gadget yang cocok buat kamu.</p>
-    <a href="#produk">
+    <a href="#produk" class="magnetic">
       Lihat Semua Produk
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
         <path d="M5 12h14M13 6l6 6-6 6"/>
@@ -505,28 +748,134 @@
   </p>
 </footer>
 
+<!-- ============ BACK TO TOP ============ -->
+<button class="to-top" id="toTop" aria-label="Kembali ke atas">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 19V5M5 12l7-7 7 7"/>
+  </svg>
+</button>
+
 <script>
-  // ===== Fade-in on scroll =====
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry, i) => {
-      if (entry.isIntersecting) {
-        setTimeout(() => entry.target.classList.add('visible'), i * 60);
-        observer.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.12, rootMargin: '0px 0px -50px 0px' });
+/* ============================================================
+   1. THEME TOGGLE
+   ============================================================ */
+const html = document.documentElement;
+const toggle = document.getElementById('themeToggle');
 
-  document.querySelectorAll('.card').forEach(el => observer.observe(el));
+toggle.addEventListener('click', () => {
+  const current = html.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  if (next === 'dark') html.setAttribute('data-theme', 'dark');
+  else html.removeAttribute('data-theme');
+  try { localStorage.setItem('gate-theme', next); } catch(e) {}
+});
 
-  // ===== Navbar shadow on scroll =====
-  const nav = document.querySelector('nav');
-  window.addEventListener('scroll', () => {
-    if (window.scrollY > 10) {
-      nav.style.boxShadow = '0 1px 12px rgba(0,0,0,0.06)';
-    } else {
-      nav.style.boxShadow = 'none';
+/* ============================================================
+   2. SCROLL PROGRESS BAR
+   ============================================================ */
+const progress = document.getElementById('progress');
+function updateProgress() {
+  const h = document.documentElement.scrollHeight - window.innerHeight;
+  const pct = h > 0 ? (window.scrollY / h) * 100 : 0;
+  progress.style.width = pct + '%';
+}
+
+/* ============================================================
+   3. NAVBAR HIDE ON SCROLL DOWN
+   ============================================================ */
+const nav = document.getElementById('nav');
+let lastY = 0;
+function updateNav() {
+  const y = window.scrollY;
+  if (y > 120 && y > lastY) nav.classList.add('hide');
+  else nav.classList.remove('hide');
+  lastY = y;
+}
+
+/* ============================================================
+   4. PARALLAX BLOBS
+   ============================================================ */
+const blobs = document.querySelectorAll('[data-parallax]');
+function updateBlobs() {
+  const y = window.scrollY;
+  blobs.forEach(el => {
+    const speed = parseFloat(el.dataset.parallax);
+    el.style.transform = `translate3d(0, ${y * speed}px, 0)`;
+  });
+}
+
+/* ============================================================
+   5. SCROLL REVEAL (IntersectionObserver)
+   ============================================================ */
+const io = new IntersectionObserver((entries) => {
+  entries.forEach((entry) => {
+    if (entry.isIntersecting) {
+      const el = entry.target;
+      const siblings = el.parentElement ? Array.from(el.parentElement.children) : [];
+      const idx = siblings.indexOf(el);
+      const delay = Math.min(idx, 6) * 80;
+      setTimeout(() => el.classList.add('visible'), delay);
+      io.unobserve(el);
     }
   });
+}, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
+
+document.querySelectorAll('.reveal, .reveal-3d, .reveal-scale').forEach(el => io.observe(el));
+
+/* ============================================================
+   6. CARD GLOW FOLLOWS CURSOR
+   ============================================================ */
+document.querySelectorAll('.card').forEach(card => {
+  card.addEventListener('mousemove', (e) => {
+    const r = card.getBoundingClientRect();
+    card.style.setProperty('--mx', ((e.clientX - r.left) / r.width) * 100 + '%');
+    card.style.setProperty('--my', ((e.clientY - r.top) / r.height) * 100 + '%');
+  });
+});
+
+/* ============================================================
+   7. MAGNETIC BUTTONS
+   ============================================================ */
+document.querySelectorAll('.magnetic').forEach(el => {
+  el.addEventListener('mousemove', (e) => {
+    const r = el.getBoundingClientRect();
+    const x = e.clientX - r.left - r.width / 2;
+    const y = e.clientY - r.top - r.height / 2;
+    el.style.transform = `translate(${x * 0.18}px, ${y * 0.25}px)`;
+  });
+  el.addEventListener('mouseleave', () => {
+    el.style.transform = '';
+  });
+});
+
+/* ============================================================
+   8. BACK TO TOP
+   ============================================================ */
+const toTop = document.getElementById('toTop');
+toTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+function updateToTop() {
+  if (window.scrollY > 600) toTop.classList.add('show');
+  else toTop.classList.remove('show');
+}
+
+/* ============================================================
+   9. SCROLL TICK (rAF throttle)
+   ============================================================ */
+let ticking = false;
+function onScroll() {
+  if (!ticking) {
+    requestAnimationFrame(() => {
+      updateProgress();
+      updateNav();
+      updateBlobs();
+      updateToTop();
+      ticking = false;
+    });
+    ticking = true;
+  }
+}
+window.addEventListener('scroll', onScroll, { passive: true });
+onScroll(); // init
 </script>
 
 </body>
